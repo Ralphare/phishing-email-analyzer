@@ -1,5 +1,7 @@
 # Phishalyzer — Phishing Email Analyzer
 
+![Sample report](docs/report-screenshot.png)
+
 A defensive triage tool that takes a raw `.eml` file and produces a clear,
 explained phishing risk report with a weighted 0–100 score. Built for SOC-style
 workflows: it doesn't just flag things, it explains *why* each finding matters,
