@@ -1,0 +1,54 @@
+Return-Path: <mailer@em-campaigns.net>
+Delivered-To: tunar@example.com
+Authentication-Results: mx.example.com;
+ spf=pass (mx.example.com: domain of mailer@em-campaigns.net designates 203.0.113.77 as permitted sender) smtp.mailfrom=mailer@em-campaigns.net;
+ dkim=pass header.i=@em-campaigns.net header.d=em-campaigns.net header.s=s1;
+ dmarc=none header.from=cloudinvoicehub.com
+Received: from smtp7.em-campaigns.net (smtp7.em-campaigns.net [203.0.113.77])
+ by mx.example.com with ESMTPS id q4w5e6
+ for <tunar@example.com>; Mon, 06 Jul 2026 11:02:47 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=em-campaigns.net; s=s1;
+ h=from:to:subject:date; bh=example==; b=examplesignature==
+From: "Billing - CloudInvoiceHub" <billing@cloudinvoicehub.com>
+To: tunar@example.com
+Subject: Payment failed - invoice #48213 for your subscription
+Date: Mon, 06 Jul 2026 11:02:45 +0000
+Message-ID: <inv-48213@cloudinvoicehub.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_boundary_subtle"
+
+--=_boundary_subtle
+Content-Type: text/plain; charset=utf-8
+
+Hello,
+
+Our records show your latest payment failed for invoice #48213 (EUR 12.99,
+CloudInvoiceHub Pro monthly plan).
+
+To keep your service active, please update your billing details within the
+next few days:
+
+https://rb.gy/ci-billing-48213
+
+If you believe this is a mistake, you can also review your invoice history:
+
+https://billing.cloudinvoicehub.com/invoices
+
+Best regards,
+CloudInvoiceHub Billing
+
+--=_boundary_subtle
+Content-Type: text/html; charset=utf-8
+
+<html><body>
+<p>Hello,</p>
+<p>Our records show your latest payment failed for invoice #48213
+(EUR 12.99, CloudInvoiceHub Pro monthly plan).</p>
+<p>To keep your service active, please <a href="https://rb.gy/ci-billing-48213">update
+your billing details</a> within the next few days.</p>
+<p>If you believe this is a mistake, you can also
+<a href="https://billing.cloudinvoicehub.com/invoices">review your invoice history</a>.</p>
+<p>Best regards,<br>CloudInvoiceHub Billing</p>
+</body></html>
+
+--=_boundary_subtle--

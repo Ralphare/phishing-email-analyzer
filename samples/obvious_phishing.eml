@@ -1,0 +1,68 @@
+Return-Path: <bounce@mail-blast-747.xyz>
+Delivered-To: tunar@example.com
+Authentication-Results: mx.example.com;
+ spf=fail (mx.example.com: domain of bounce@mail-blast-747.xyz does not designate 185.220.101.45 as permitted sender) smtp.mailfrom=bounce@mail-blast-747.xyz;
+ dkim=none;
+ dmarc=fail (p=REJECT sp=REJECT dis=NONE) header.from=paypal.com
+Received: from unknown (unknown [185.220.101.45])
+ by mx.example.com with ESMTP id z9y8x7
+ for <tunar@example.com>; Mon, 06 Jul 2026 03:41:09 +0000 (UTC)
+From: "PayPal Security Team" <service@paypal.com>
+Reply-To: recovery-desk@mail-blast-747.xyz
+To: tunar@example.com
+Subject: URGENT: Your account will be suspended within 24 hours
+Date: Mon, 06 Jul 2026 03:41:00 +0000
+Message-ID: <88231.a91@mail-blast-747.xyz>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="=_boundary_phish"
+
+--=_boundary_phish
+Content-Type: multipart/alternative; boundary="=_boundary_phish_alt"
+
+--=_boundary_phish_alt
+Content-Type: text/plain; charset=utf-8
+
+Dear Customer,
+
+We detected unusual sign-in activity on your account. Your account will be
+suspended within 24 hours unless you verify your identity immediately.
+
+Act now to avoid permanent closure. Click the link below to log in and
+confirm your details:
+
+https://paypa1-secure-verification.com/login
+
+If the link does not work, use our backup server:
+http://185.220.101.45/pp/verify
+
+Please also review the attached security form, enter your password and
+credit card details, and reply to this message. Do not share this email
+with anyone.
+
+PayPal Security Team
+
+--=_boundary_phish_alt
+Content-Type: text/html; charset=utf-8
+
+<html><body>
+<p>Dear Customer,</p>
+<p>We detected <b>unusual sign-in activity</b> on your account. Your account
+will be suspended within 24 hours unless you verify your identity immediately.</p>
+<p><a href="https://paypa1-secure-verification.com/login">https://www.paypal.com/signin</a></p>
+<p>Backup server: <a href="http://185.220.101.45/pp/verify">click here to verify</a></p>
+<p>Short link: <a href="https://bit.ly/3xPPverify">https://bit.ly/3xPPverify</a></p>
+<p>Do not share this email with anyone.</p>
+<p>PayPal Security Team</p>
+</body></html>
+
+--=_boundary_phish_alt--
+
+--=_boundary_phish
+Content-Type: application/octet-stream; name="SecurityForm.pdf.exe"
+Content-Disposition: attachment; filename="SecurityForm.pdf.exe"
+Content-Transfer-Encoding: base64
+
+VGhpcyBpcyBhIGhhcm1sZXNzIHRleHQgcGxhY2Vob2xkZXIgZm9yIHRlc3RpbmcgcHVycG9z
+ZXMgb25seS4gTm90IGEgcmVhbCBleGVjdXRhYmxlLg==
+
+--=_boundary_phish--

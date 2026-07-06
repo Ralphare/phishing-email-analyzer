@@ -1,0 +1,5 @@
+# Core tool: 100% Python standard library — nothing to install.
+# The line below is OPTIONAL, only needed for the --online DNS checks
+# (SPF/DMARC record lookups). The tool detects its absence and degrades
+# gracefully, so you can run fully offline with zero dependencies.
+dnspython==2.6.1

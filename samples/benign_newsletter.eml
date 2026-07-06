@@ -1,0 +1,54 @@
+Return-Path: <noreply@github.com>
+Delivered-To: tunar@example.com
+Authentication-Results: mx.example.com;
+ spf=pass (mx.example.com: domain of noreply@github.com designates 192.30.252.206 as permitted sender) smtp.mailfrom=noreply@github.com;
+ dkim=pass header.i=@github.com header.d=github.com header.s=pf2023;
+ dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=github.com
+Received: from out-25.smtp.github.com (out-25.smtp.github.com [192.30.252.206])
+ by mx.example.com with ESMTPS id a1b2c3
+ for <tunar@example.com>; Mon, 06 Jul 2026 09:14:22 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=github.com; s=pf2023;
+ h=from:to:subject:date:message-id; bh=example==; b=examplesignature==
+From: GitHub <noreply@github.com>
+To: tunar@example.com
+Subject: [GitHub] Your weekly security digest
+Date: Mon, 06 Jul 2026 09:14:20 +0000
+Message-ID: <digest-20260706@github.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="=_boundary_benign"
+
+--=_boundary_benign
+Content-Type: text/plain; charset=utf-8
+
+Hi tunar-a,
+
+Here's your weekly security digest for your repositories.
+
+- wazuh-home-lab: no new Dependabot alerts this week. Nice work.
+- threat-detection-platform: 1 dependency update available (fastapi 0.111 -> 0.112).
+
+Review your alerts any time:
+https://github.com/settings/security-analysis
+
+You're receiving this because you enabled security digests.
+Manage preferences: https://github.com/settings/notifications
+
+Thanks,
+The GitHub Team
+
+--=_boundary_benign
+Content-Type: text/html; charset=utf-8
+
+<html><body>
+<p>Hi tunar-a,</p>
+<p>Here's your weekly security digest for your repositories.</p>
+<ul>
+<li><b>wazuh-home-lab</b>: no new Dependabot alerts this week.</li>
+<li><b>threat-detection-platform</b>: 1 dependency update available.</li>
+</ul>
+<p><a href="https://github.com/settings/security-analysis">Review your alerts</a></p>
+<p><a href="https://github.com/settings/notifications">Manage preferences</a></p>
+<p>Thanks,<br>The GitHub Team</p>
+</body></html>
+
+--=_boundary_benign--
