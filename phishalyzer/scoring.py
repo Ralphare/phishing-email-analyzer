@@ -8,7 +8,8 @@ Design choices, and why:
   * Diminishing returns within a category. The 4th suspicious URL adds
     less than the 1st; otherwise long spam emails with many links would
     max the score for the wrong reason. We halve each successive
-    contribution within a category (1, 1/2, 1/4, ...).
+    contribution of the same severity within a category (1, 1/2, 1/4, ...),
+    so a category's first HIGH and first MEDIUM both count in full.
   * Hard cap at 100 and a floor at 0 — the score is a triage aid, not a
     probability. Analysts should read the findings, not just the number.
 """

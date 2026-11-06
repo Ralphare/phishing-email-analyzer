@@ -115,8 +115,9 @@ def main(argv: list[str] | None = None) -> int:
         try:
             runner()
         except Exception as exc:
-            findings.append(Finding("Body" if name == "body" else name.capitalize(),
-                                    INFO, f"{name} analyzer error",
+            category = {"authentication": "Authentication", "urls": "URLs",
+                        "attachments": "Attachments", "body": "Body"}[name]
+            findings.append(Finding(category, INFO, f"{name} analyzer error",
                                     f"Analyzer failed gracefully: {exc.__class__.__name__}: {exc}",
                                     "Malformed input tripped this analyzer; other checks "
                                     "still ran. Consider inspecting the raw file manually."))

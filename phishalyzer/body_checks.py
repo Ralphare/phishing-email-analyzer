@@ -65,9 +65,11 @@ SIGNAL_PATTERNS: list[tuple[str, str, str, str]] = [
          "pattern, but it still filters for the most susceptible victims."),
     ),
     (
+        # 'are you available?' is kept outside the \b...\b group: a word
+        # boundary can't follow a trailing '?', so it never matched before.
         r"\b(do not (share|tell|forward|disclose)|keep this (confidential|between us)|"
-        r"are you available\??$|quick (favor|task|request)|"
-        r"(buy|purchase|get) (some |the )?gift ?cards?)\b",
+        r"quick (favor|task|request)|(buy|purchase|get) (some |the )?gift ?cards?)\b"
+        r"|\b(are you available\??)[ \t]*$",
         "Secrecy / CEO-fraud style request", HIGH,
         ("'Keep this between us, quick favor, buy gift cards' is the fingerprint "
          "of Business Email Compromise: impersonate an executive, isolate the "
@@ -91,6 +93,9 @@ def _strip_html(html: str) -> str:
 def analyze_body(parsed: ParsedEmail) -> list[Finding]:
     findings: list[Finding] = []
     text = f"{parsed.text_body}\n{_strip_html(parsed.html_body)}"
+    # Real .eml files use CRLF line endings (RFC 5322). Normalize them so
+    # end-of-line rules ('are you available?$') don't trip over the '\r'.
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
     if not text.strip():
         findings.append(Finding("Body", LOW, "Empty or unreadable body",
                                 "No text content could be extracted.",
@@ -122,7 +127,8 @@ def analyze_body(parsed: ParsedEmail) -> list[Finding]:
     if display and from_domain:
         for brand in ("paypal", "microsoft", "apple", "amazon", "google", "netflix",
                       "dhl", "fedex", "ups", "chase", "docusign", "linkedin", "bank"):
-            if brand in display and brand not in from_domain:
+            # Whole-word match: 'Marketing Groups' must not read as 'UPS'.
+            if re.search(rf"\b{brand}\b", display) and brand not in from_domain:
                 findings.append(Finding(
                     "Body", HIGH, "Display name impersonates a brand",
                     f"Display name '{display}' claims '{brand}' but the address is "

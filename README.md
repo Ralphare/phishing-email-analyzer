@@ -1,5 +1,7 @@
 # Phishalyzer — Phishing Email Analyzer
 
+[![tests](https://github.com/Ralphare/phishing-email-analyzer/actions/workflows/tests.yml/badge.svg)](https://github.com/Ralphare/phishing-email-analyzer/actions/workflows/tests.yml)
+
 ![Sample report](docs/report-screenshot.png)
 
 A defensive triage tool that takes a raw `.eml` file and produces a clear,
@@ -22,9 +24,11 @@ Reply-To / Return-Path domains that diverge from the From: domain.
 
 **2. URLs**
 Extracts every link from both the plain-text and HTML bodies (including
-defanged `hxxp://` notation), then flags:
-- typosquatted lookalikes of ~25 commonly impersonated brands (edit-distance
-  based: `paypa1-secure.com` is 1 edit from `paypal`)
+defanged `hxxp://evil[.]com` notation), then flags:
+- typosquatted lookalikes of ~25 commonly impersonated brands: homoglyph
+  swaps (`paypa1`, `arnazon`), doubled letters (`paypall`), and 1–2 edit
+  typos for longer brand names (`micorsoft`), tuned so ordinary words like
+  `stream` or `apply` aren't mistaken for `steam` or `apple`
 - trusted brand names stuffed into subdomains of unrelated domains
   (`paypal.com.account-verify.net`)
 - raw-IP links, URL shorteners, `user@host` obfuscation
@@ -47,7 +51,7 @@ greetings — plus display names that claim a brand the sending domain isn't.
 
 **5. Weighted scoring**
 Findings carry severities (INFO=0 … CRITICAL=40 points) with diminishing
-returns inside each category, so one DMARC fail outweighs ten weak keyword
+returns for repeated findings of the same severity inside a category, so one DMARC fail outweighs ten weak keyword
 hits, and a spammy email with 30 links can't max the score for the wrong
 reason. Verdict bands: 0–19 likely benign, 20–44 low risk, 45–69 suspicious,
 70–100 likely phishing.
@@ -55,10 +59,13 @@ reason. Verdict bands: 0–19 likely benign, 20–44 low risk, 45–69 suspiciou
 ## Project layout
 
 ```
-phishing-analyzer/
+phishing-email-analyzer/
 ├── analyze.py                     # CLI entry point
 ├── requirements.txt
 ├── README.md
+├── LICENSE
+├── .github/workflows/tests.yml   # CI: runs the tests on Python 3.10–3.13
+├── docs/report-screenshot.png
 ├── phishalyzer/
 │   ├── __init__.py
 │   ├── eml_parser.py              # crash-proof .eml loading & decoding
@@ -69,10 +76,12 @@ phishing-analyzer/
 │   ├── body_checks.py             # social-engineering language signals
 │   ├── scoring.py                 # weighted 0–100 score
 │   └── report.py                  # console + JSON report rendering
-└── samples/
-    ├── benign_newsletter.eml      # scores  0 — LIKELY BENIGN
-    ├── subtle_borderline.eml      # scores 55 — SUSPICIOUS
-    └── obvious_phishing.eml       # scores 100 — HIGH RISK
+├── samples/
+│   ├── benign_newsletter.eml      # scores  0 — LIKELY BENIGN
+│   ├── subtle_borderline.eml      # scores 55 — SUSPICIOUS
+│   └── obvious_phishing.eml       # scores 100 — HIGH RISK
+└── tests/
+    └── test_detections.py         # regression tests (stdlib unittest)
 ```
 
 ## Install
@@ -80,7 +89,8 @@ phishing-analyzer/
 Requires Python 3.10+. No dependencies for offline use:
 
 ```bash
-git clone <your-repo-url> && cd phishing-analyzer
+git clone https://github.com/Ralphare/phishing-email-analyzer.git
+cd phishing-email-analyzer
 python3 analyze.py samples/obvious_phishing.eml     # that's it
 ```
 
@@ -143,6 +153,19 @@ Run all three samples to see the full score range:
 for f in samples/*.eml; do python3 analyze.py "$f"; done
 ```
 
+## Tests
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The suite covers true positives (typosquats, link-text mismatch, DMARC fail,
+brand impersonation) and known false-positive traps found while tuning the
+detections: `us-news.com` vs `ups`, `stream.com` vs `steam`, a "Marketing
+Groups" display name vs UPS, defanged `evil[.]com` URLs, and the classic BEC
+opener "are you available?". It also pins the sample scores documented above.
+GitHub Actions runs it on every push.
+
 ## How each check maps to real phishing tactics
 
 | Check | Real-world tactic it catches |
@@ -151,7 +174,7 @@ for f in samples/*.eml; do python3 analyze.py "$f"; done
 | SPF fail / softfail | Direct spoofing from unauthorized servers; sloppy attacker infra that never bothered with the envelope domain's policy. |
 | Unaligned DKIM pass | "Technically signed" mail where the signature belongs to the attacker's own domain — a valid signature from `evil.com` proves nothing about `paypal.com`. |
 | Reply-To mismatch | BEC/credential harvest: spoof the From:, but route replies to a mailbox the attacker controls. |
-| Typosquat detection | Lookalike domains (`paypa1`, `micros0ft`, `arnazon`) registered specifically because they survive a quick glance. |
+| Typosquat detection | Lookalike domains (`paypa1`, `micros0ft`, `arnazon`) registered specifically because they survive a quick glance. Tuned to ignore real words that happen to be one letter from a brand. |
 | Brand-in-subdomain | `paypal.com.security-check.net` — exploits left-to-right reading; only the rightmost registrable domain identifies the owner. |
 | Text/href mismatch | The anchor displays a trusted URL while the href points elsewhere — no legitimate reason exists for this. |
 | Shorteners & raw IPs | Destination hiding and reputation-filter evasion; throwaway or compromised hosts with no registered domain. |
@@ -182,7 +205,7 @@ for f in samples/*.eml; do python3 analyze.py "$f"; done
    and optionally query the hashes against a local threat-intel list.
 2. **Received-chain hop analysis** — walk the `Received:` headers bottom-up to
    spot geographic/ASN anomalies and forged early hops.
-3. **Homoglyph/IDN detection** — extend the typosquat check to punycode
+3. **IDN / Unicode homoglyphs** — extend the ASCII homoglyph check to punycode
    (`xn--`) domains and Unicode confusables (`pаypal.com` with Cyrillic 'а').
 4. **Batch mode + CSV/JSONL export** — analyze a whole mailbox export and feed
    results into your Wazuh instance as custom events for dashboarding.

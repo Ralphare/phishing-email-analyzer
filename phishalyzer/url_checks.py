@@ -16,7 +16,7 @@ from html.parser import HTMLParser
 from urllib.parse import urlparse
 
 from .eml_parser import ParsedEmail
-from .findings import Finding, LOW, MEDIUM, HIGH, CRITICAL
+from .findings import Finding, INFO, LOW, MEDIUM, HIGH, CRITICAL
 
 # --- Reference data ---------------------------------------------------------
 
@@ -99,9 +99,54 @@ def levenshtein(a: str, b: str) -> int:
     return prev[-1]
 
 
+# Characters attackers swap in because they look alike at a glance.
+HOMOGLYPHS = [("rn", "m"), ("vv", "w"), ("0", "o"), ("1", "l"), ("3", "e"),
+              ("5", "s"), ("4", "a"), ("7", "t"), ("8", "b")]
+
+
+def _deglyph(token: str) -> str:
+    for fake, real in HOMOGLYPHS:
+        token = token.replace(fake, real)
+    return token
+
+
+def _undouble(token: str) -> set[str]:
+    """Every variant of `token` with one doubled letter collapsed ('paypall' -> 'paypal')."""
+    return {token[:i] + token[i + 1:] for i in range(1, len(token)) if token[i] == token[i - 1]}
+
+
+def typosquat_match(token: str, brand: str) -> str:
+    """
+    Return a short reason if `token` imitates `brand`, else "".
+
+    Plain edit distance alone is too noisy for short brands: 'stream' is
+    1 edit from 'steam', 'apply' from 'apple', 'us' from 'ups'. Real
+    typosquats use a narrower set of tricks, so we check those directly:
+      * homoglyph swaps  (paypa1, micros0ft, arnazon)  - any brand length
+      * a doubled letter (paypall, gooogle)            - any brand length
+      * generic 1-2 edits (micorsoft, netflex)         - only brands of 7+
+        characters, where an accidental collision with a real word is rare
+    Brands of 3 letters or fewer (ups, dhl) are skipped here entirely;
+    the exact-token check (b) still catches 'ups.delivery-track.net'.
+    """
+    if token == brand or len(brand) <= 3 or len(token) < 4:
+        return ""
+    if _deglyph(token) == brand:
+        return "lookalike characters"
+    if brand in _undouble(token):
+        return "doubled letter"
+    if len(brand) >= 7 and len(token) >= 5:
+        dist = levenshtein(token, brand)
+        if 0 < dist <= 2:
+            return f"{dist} edit(s) from '{brand}'"
+    return ""
+
+
 def _normalize_defanged(url: str) -> str:
     """Analysts often share 'defanged' URLs (hxxp, [.]) — re-fang so we can parse."""
-    return url.replace("hxxp", "http").replace("[.]", ".").replace("(.)", ".")
+    for fake, real in (("hxxp", "http"), ("[.]", "."), ("(.)", "."), ("[:]", ":"), ("[://]", "://")):
+        url = url.replace(fake, real)
+    return url
 
 
 class _AnchorExtractor(HTMLParser):
@@ -136,7 +181,9 @@ def analyze_urls(parsed: ParsedEmail) -> tuple[list[Finding], list[str]]:
     # 1) Gather URLs from both bodies (plain regex) and HTML anchors (parser).
     urls: list[str] = []
     for body in (parsed.text_body, parsed.html_body):
-        urls.extend(_normalize_defanged(u) for u in URL_REGEX.findall(body or ""))
+        # Re-fang the whole body first: brackets in 'evil[.]com' would otherwise
+        # end the regex match early and leave a broken URL behind.
+        urls.extend(URL_REGEX.findall(_normalize_defanged(body or "")))
 
     anchors: list[tuple[str, str]] = []
     if parsed.html_body:
@@ -156,7 +203,7 @@ def analyze_urls(parsed: ParsedEmail) -> tuple[list[Finding], list[str]]:
     unique_urls = [u for u in urls if not (u in seen or seen.add(u))]
 
     if not unique_urls:
-        findings.append(Finding("URLs", LOW if parsed.html_body else LOW,
+        findings.append(Finding("URLs", INFO,
                                 "No URLs found",
                                 "The email contains no hyperlinks.",
                                 "Not inherently safe — attachment-based and reply-based "
@@ -208,14 +255,14 @@ def analyze_urls(parsed: ParsedEmail) -> tuple[list[Finding], list[str]]:
             if reg_dom == real_domain or reg_dom.endswith("." + real_domain):
                 continue  # actually the real brand
 
-            # (a) Typosquat: any hyphen-token of the domain is 1-2 edits from a brand.
+            # (a) Typosquat: a hyphen-token of the domain imitates a brand.
             for token in core_tokens:
-                dist = levenshtein(token, brand)
-                if 0 < dist <= (1 if len(brand) <= 6 else 2):
+                hit = typosquat_match(token, brand)
+                if hit:
                     findings.append(Finding(
                         "URLs", CRITICAL, "Likely typosquatted domain",
                         f"'{reg_dom}' looks like '{real_domain}' "
-                        f"(token '{token}' is {dist} edit(s) from '{brand}').",
+                        f"(token '{token}': {hit}).",
                         ("Typosquatting swaps, drops or adds characters so the domain "
                          "passes a quick glance — paypa1 with a digit one, rn for m. "
                          "The attacker registered this lookalike; it has no relation "
